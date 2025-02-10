@@ -1,0 +1,29 @@
+{
+  "products": [
+    {
+      "name": "Samsung Galaxy 15F",
+      "brand": "samsung",
+      "category": "Phone",
+      "price": "480",
+      "description": "Smartphone",
+      "createdAt": "2025-02-05",
+      "id": "2"
+    },
+    {
+      "id": "8ead",
+      "name": "assdsd",
+      "brand": "d",
+      "category": "Phones",
+      "price": "2323",
+      "description": "",
+      "createdAt": "2025-02-06"
+    },
+    {
+      "id": "eaf0",
+      "epic_id": "4",
+      "name": "aaaaa",
+      "description": "trtrt",
+      "createdAt": "2025-02-09"
+    }
+  ]
+}
