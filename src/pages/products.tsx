@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 interface Product {
   id: number;
@@ -36,7 +37,9 @@ function ProductLists(props: ProductListsProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [offset, setOffset] = useState<number>(0);
   const [limit] = useState<number>(5);
+
   function sortBy(sortby: string) {
+    console.log(sortby);
     if (order == "asc") {
       setOrder("desc");
     } else {
@@ -50,7 +53,7 @@ function ProductLists(props: ProductListsProps) {
         return response.json();
       })
       .then((data) => {
-        // console.log(data);
+        console.log(data);
         setProducts(data);
       })
       .catch((error) => console.log("Error: ", error));
@@ -64,7 +67,6 @@ function ProductLists(props: ProductListsProps) {
         return response.json();
       })
       .then((data) => {
-        console.log(data);
         setProducts(data);
       })
       .catch((error) => console.log("Error: ", error));
@@ -75,12 +77,13 @@ function ProductLists(props: ProductListsProps) {
   }, [offset]);
 
   function deleteProduct(id: number) {
-    fetch("http://localhost:8000/tasks/" + id, {
+    fetch(`http://localhost:8000/tasks/${id}`, {
       method: "DELETE",
     })
-      .then((response) => response.json())
-      .then(() => fetchProducts());
+      .then(() => fetchProducts())
+      .catch((error) => console.log("Error deleting product", error));
   }
+
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -94,6 +97,7 @@ function ProductLists(props: ProductListsProps) {
       setOffset(offset - limit);
     }
   }
+
   return (
     <>
       <h2 className="text-center mb-3">List of Products</h2>
@@ -144,6 +148,7 @@ function ProductLists(props: ProductListsProps) {
                 >
                   Edit
                 </button>
+
                 <button
                   onClick={() => deleteProduct(product.id)}
                   type="button"
@@ -174,132 +179,72 @@ function ProductForm(props: ProductFormProps) {
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
-
     const product = Object.fromEntries(formData.entries());
 
     if (!product.name || !product.epic_id || !product.description) {
-      setErrorMessage("Please provide all the required fields");
+      setErrorMessage("All fields are required.");
       return;
     }
 
-    if (props.product?.id) {
-      product.createdAt = new Date().toISOString().slice(0, 10); // Ispravka
-      fetch("http://localhost:8000/tasks/" + props.product.id, {
-        method: "PUT", // Trebalo bi da bude PUT za izmenu
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(product),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Network response was not OK");
-          }
-          return response.json();
-        })
-        .then((data) => {
-          props.showList();
-        });
-    } else {
-      product.createdAt = new Date().toISOString().slice(0, 10); // Ispravka
-      console.log(product);
-      fetch("http://localhost:8000/tasks", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(product),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Network response was not OK");
-          }
-          return response.json();
-        })
-        .then((data) => {
-          props.showList();
-        });
-    }
+    const method = props.product?.id ? "PUT" : "POST";
+    const url = props.product?.id
+      ? `http://localhost:8000/tasks/${props.product.id}`
+      : "http://localhost:8000/tasks";
+
+    fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(product),
+    }).then(() => props.showList());
   }
 
   return (
-    <>
-      <h2 className="text-center mb-3">
-        {props.product?.id ? "Edit Product" : "Create New Product"}
+    <div className="card shadow p-4 w-50 mx-auto">
+      <h2 className="text-center mb-4">
+        {props.product?.id ? "Edit Product" : "Create Product"}
       </h2>
-
-      <div className="row">
-        <div className="col-lg-6 mx-auto">
-          {errorMessage && (
-            <div className="alert alert-danger">{errorMessage}</div>
-          )}
-
-          <form onSubmit={(event) => handleSubmit(event)}>
-            {props.product?.id && (
-              <div className="row mb-3">
-                <label className="col-sm-4 col-form-label">ID</label>
-                <div>
-                  <input
-                    className="form-control"
-                    name="id"
-                    defaultValue={props.product?.id}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="row mb-3">
-              <label className="col-sm-4 col-form-label">EpicID</label>
-              <div>
-                <input
-                  className="form-control"
-                  name="epic_id"
-                  defaultValue={props.product?.epic_id}
-                />
-              </div>
-            </div>
-
-            <div className="row mb-3">
-              <label className="col-sm-4 col-form-label">Name</label>
-              <div>
-                <input
-                  className="form-control"
-                  name="name"
-                  defaultValue={props.product?.name}
-                />
-              </div>
-            </div>
-
-            <div className="row mb-3">
-              <label className="col-sm-4 col-form-label">Description</label>
-              <div>
-                <textarea
-                  className="form-control"
-                  name="description"
-                  defaultValue={props.product?.description}
-                />
-              </div>
-            </div>
-
-            <div className="row">
-              <div className="offset-sm-4 col-sm-4 d-grid">
-                <button type="submit" className="btn btn-primary btn-sm me-3">
-                  Save
-                </button>
-              </div>
-              <div className="col-sm-4 d-grid">
-                <button
-                  onClick={() => props.showList()}
-                  type="button"
-                  className="btn btn-secondary me-2"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </form>
+      {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
+      <form onSubmit={handleSubmit}>
+        <div className="mb-3">
+          <label className="form-label">Name</label>
+          <input
+            className="form-control"
+            name="name"
+            defaultValue={props.product?.name}
+            required
+          />
         </div>
-      </div>
-    </>
+        <div className="mb-3">
+          <label className="form-label">Epic ID</label>
+          <input
+            className="form-control"
+            name="epic_id"
+            defaultValue={props.product?.epic_id}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Description</label>
+          <textarea
+            className="form-control"
+            name="description"
+            defaultValue={props.product?.description}
+            required
+          ></textarea>
+        </div>
+        <div className="d-flex justify-content-between">
+          <button type="submit" className="btn btn-success">
+            Save
+          </button>
+          <button
+            type="button"
+            onClick={props.showList}
+            className="btn btn-secondary"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
